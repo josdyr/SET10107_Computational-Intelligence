@@ -48,8 +48,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			 */
 
 			// Select 2 Individuals from the current population. Currently returns random Individual
-			Individual father = select_tournament();
-			Individual mother = select_tournament();
+//			Individual father = select_tournament();
+//			Individual mother = select_tournament();
+			Individual father = select_roulette();
+			Individual mother = select_roulette();
 
 			// Generate a child by crossover. Not Implemented
 			// ArrayList<Individual> children = reproduce(father, mother);
@@ -156,6 +158,29 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		
 		// repeat until desiered number of individuals are desired
 		return best_tournament_member;
+	}
+	
+	private Individual select_roulette() {
+		
+		// sum up all the fitnesses from the population
+		double fitnessSum = 0;
+		for (int i = 0; i < Parameters.popSize; i++) {
+			fitnessSum += population.get(i).fitness;
+		}
+		
+		// make a random point between 0 and the fitness sum
+		double random_number = Math.random() * fitnessSum;
+		
+		// iterate through the population again, until we reach the random_number
+		double partialSum = 0;
+		for (int i = 0; i < Parameters.popSize; i++) {
+			partialSum += population.get(i).fitness;
+			if (partialSum >= random_number) {
+				return population.get(i); // return the individual at current index
+			}
+		}
+		return null; // return null should never happen
+		
 	}
 
 	/**

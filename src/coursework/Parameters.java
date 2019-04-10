@@ -30,7 +30,7 @@ public class Parameters {
 	public static double maxGene = +3;
 		
 	public static int popSize = 200; //200???
-	public static int maxEvaluations = 1000;
+	public static int maxEvaluations = 20000;
 	
 	public static double selectionPressure = 0.1; // 10%
 	public static int k_amount = (int) Math.floor(selectionPressure * popSize); // defualt=4 (0.1 * 40)
