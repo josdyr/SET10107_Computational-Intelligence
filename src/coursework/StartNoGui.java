@@ -1,5 +1,9 @@
 package coursework;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import model.Fitness;
 import model.LunarParameters.DataSet;
 import model.NeuralNetwork;
@@ -18,14 +22,14 @@ public class StartNoGui {
 		 * 
 		 */
 		
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 10; i++) {
 			
 			/*
 			 * Set the parameters here or directly in the Parameters Class.
 			 * Note you should use a maximum of 20,0000 evaluations for your experiments 
 			 */
-			Parameters.maxEvaluations = 20000; // Used to terminate the EA after this many generations
-			Parameters.popSize = 200; // Population Size
+			Parameters.maxEvaluations = 1000; // Used to terminate the EA after this many generations
+			Parameters.popSize = 100; // Population Size
 
 			//number of hidden nodes in the neural network
 			Parameters.setHidden(5);
@@ -44,12 +48,34 @@ public class StartNoGui {
 			 */
 			System.out.println(nn.best);
 			
+			try {
+	            // Open given file in append mode. 
+	            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
+	            out.write(String.valueOf(nn.best).toString());
+	            out.write(", ");
+	            out.close();
+	        } 
+	        catch (IOException e) { 
+	            System.out.println("exception occoured" + e); 
+	        }
+			
 			/**
 			 * We now need to test the trained network on the unseen test Set
 			 */
 			Parameters.setDataSet(DataSet.Test);
 			double fitness = Fitness.evaluate(nn);
 			System.out.println("Fitness on " + Parameters.getDataSet() + " " + fitness);
+			
+			try {
+	            // Open given file in append mode. 
+	            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
+	            out.write(String.valueOf(fitness).toString());
+	            out.write("\n");
+	            out.close();
+	        } 
+	        catch (IOException e) { 
+	            System.out.println("exception occoured" + e); 
+	        }
 		}
 		
 		

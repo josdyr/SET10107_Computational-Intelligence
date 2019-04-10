@@ -1,7 +1,10 @@
 package coursework;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
@@ -45,13 +48,14 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			 */
 
 			// Select 2 Individuals from the current population. Currently returns random Individual
-			Individual father = select();
-			Individual mother = select();
+			Individual father = select_tournament();
+			Individual mother = select_tournament();
 
 			// Generate a child by crossover. Not Implemented
 			// ArrayList<Individual> children = reproduce(father, mother);
 
-			ArrayList<Individual> children = reproduce_cross_one(father, mother);
+			// ArrayList<Individual> children = reproduce_cross_one(father, mother);
+			ArrayList<Individual> children = reproduce_cross_uni(father, mother);
 
 			//mutate the offspring
 			mutate(children);
@@ -67,22 +71,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 			// Implemented in NN class.
 			outputStats();
-
-			//Increment number of completed generations
 		}
 
 		//save the trained network to disk
 		saveNeuralNetwork();
-		
-		// write best fitness to .csv
-//		try (PrintWriter writer = new PrintWriter(new File("evolutionary_algorithm.csv"))) {
-//			StringBuilder sb = new StringBuilder();
-//			sb.append(this.best.fitness);
-//			writer.write(sb.toString());
-//			System.out.println("CSV file written to!");
-//	    } catch (FileNotFoundException e) {
-//	    	System.out.println(e.getMessage());
-//	    }
 	}
 
 
@@ -139,6 +131,32 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		Individual parent = population.get(Parameters.random.nextInt(Parameters.popSize));
 		return parent.copy();
 	}
+	
+	private Individual select_tournament() {
+		
+		// select k_individuals completely randomly from the population
+		ArrayList<Individual> k_individuals = new ArrayList<>();
+		//System.out.println(population);
+		//System.out.println(population.toArray().length);
+		for (int i = 0; i < Parameters.k_amount; i++) {
+			k_individuals.add(population.get(Parameters.random.nextInt(Parameters.popSize)));
+		}
+		//System.out.println(population);
+		//System.out.println(k_individuals.toArray().length);
+		
+		// select the one most fit individual from the k_individuals
+		//System.out.println(k_individuals);
+		Individual best_tournament_member = k_individuals.get(0);
+		for (int i = 0; i < Parameters.k_amount; i++) {
+			if (best_tournament_member.fitness < k_individuals.get(i).fitness) {
+				best_tournament_member = k_individuals.get(i);
+			}
+		}
+		//System.out.println(best_tournament_member);
+		
+		// repeat until desiered number of individuals are desired
+		return best_tournament_member;
+	}
 
 	/**
 	 * Crossover / Reproduction
@@ -148,10 +166,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 */
 	private ArrayList<Individual> reproduce(Individual father, Individual mother) {
 		ArrayList<Individual> children = new ArrayList<>();
-
 		children.add(father.copy());
 		children.add(mother.copy());
-
 		return children;
 	}
 
@@ -162,6 +178,29 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 		for (int i = 0; i < father.chromosome.length; ++i) {
 			if (i < crossPoint) {
+				child_one.chromosome[i] = father.chromosome[i];
+				child_two.chromosome[i] = mother.chromosome[i];
+			}
+			else {
+				child_one.chromosome[i] = mother.chromosome[i];
+				child_two.chromosome[i] = father.chromosome[i];
+			}
+		}
+		ArrayList<Individual> children = new ArrayList<>();
+		children.add(child_one);
+		children.add(child_two);
+		return children;
+	}
+	
+	public ArrayList<Individual> reproduce_cross_uni(Individual father, Individual mother) {
+		// uniform crossover: combining multiple (default two) candidate solutions to get new solutions (default two)
+		// returns two sets of genes (chromosomes), both inherited from its parents
+		
+		Individual child_one = new Individual();
+		Individual child_two = new Individual();
+
+		for (int i = 0; i < father.chromosome.length; ++i) {
+			if (Parameters.random.nextBoolean()) { // chance is 50-50 from either parent
 				child_one.chromosome[i] = father.chromosome[i];
 				child_two.chromosome[i] = mother.chromosome[i];
 			}
