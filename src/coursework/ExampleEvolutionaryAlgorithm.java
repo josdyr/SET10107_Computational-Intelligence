@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import model.Fitness;
 import model.Individual;
@@ -50,8 +51,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			// Select 2 Individuals from the current population. Currently returns random Individual
 //			Individual father = select_tournament();
 //			Individual mother = select_tournament();
-			Individual father = select_roulette();
-			Individual mother = select_roulette();
+//			Individual father = select_roulette();
+//			Individual mother = select_roulette();
+			Individual father = select_stochastic();
+			Individual mother = select_stochastic();
 
 			// Generate a child by crossover. Not Implemented
 			// ArrayList<Individual> children = reproduce(father, mother);
@@ -60,7 +63,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			ArrayList<Individual> children = reproduce_cross_uni(father, mother);
 
 			//mutate the offspring
-			mutate(children);
+			mutate_swap(children);
 
 			// Evaluate the children
 			evaluateIndividuals(children);
@@ -160,6 +163,39 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		return best_tournament_member;
 	}
 	
+	private Individual select_stochastic() {
+		
+		// sum up all the fitnesses from the population
+		double fitnessSum = 0;
+		for (int i = 0; i < Parameters.popSize; i++) {
+			fitnessSum += population.get(i).fitness;
+		}
+		
+		Individual father = null;
+		Individual mother = null;
+		
+		// make two random points between 0 and the fitness sum
+		double random_one = Math.random() * fitnessSum;
+		double random_two = Math.random() * fitnessSum;
+		
+		// iterate through the population again, until we reach the random_number
+		double partialSum_one = 0;
+		double partialSum_two = 0;
+		for (int i = 0; i < Parameters.popSize; i++) {
+			partialSum_one += population.get(i).fitness;
+			if (partialSum_one >= random_one) {
+				father = population.get(i);
+			}
+			partialSum_two += population.get(i).fitness;
+			if (partialSum_two >= random_two) {
+				mother = population.get(i);
+			}
+		}
+		
+		return null; // return null should never happen
+		
+	}
+	
 	private Individual select_roulette() {
 		
 		// sum up all the fitnesses from the population
@@ -256,6 +292,23 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 					}
 				}
 			}
+		}
+	}
+	
+	private void mutate_swap(ArrayList<Individual> individuals) {
+		for(Individual individual : individuals) {
+			// select two genes to be swapped
+			
+			int random_one = Parameters.random.nextInt(individual.chromosome.length-1);
+			int random_two = Parameters.random.nextInt(individual.chromosome.length-1);
+			
+			double temp_one;
+			double temp_two;
+			temp_one = individual.chromosome[random_one];
+			temp_two = individual.chromosome[random_two];
+			
+			individual.chromosome[random_one] = temp_two;
+			individual.chromosome[random_two] = temp_one;
 		}
 	}
 
