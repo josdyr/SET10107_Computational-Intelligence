@@ -1,19 +1,14 @@
 package coursework;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Random;
 
-import model.Individual;
 import model.LunarParameters;
-import model.NeuralNetwork;
 import model.LunarParameters.DataSet;
+import model.NeuralNetwork;
 
 public class Parameters {
  
@@ -23,24 +18,28 @@ public class Parameters {
 	 * 
 	 */
 	public static int count = 0;
+	public static String fileName = "best_relu.csv";
 	
-	private static int numHidden = 5; // number of hidden neurons per layer (josdyr)
+	private static int numHidden = 5; // number of hidden neurons per layer (josdyr) 3 5 8 15 30
 	private static int numGenes = calculateNumGenes(); // default=48 (josdyr)
-	public static double minGene = -3; // specifies minimum and maximum weight values 
+	public static double minGene = -3; // specifies minimum and maximum weight values 1 3 8 20
 	public static double maxGene = +3;
 		
-	public static int popSize = 200; //200???
+	public static int popSize = 100; // 20, 50, 200, 400, 1000
 	public static int maxEvaluations = 20000;
 	
-	public static double selectionPressure = 0.1; // 10%
-	public static int k_amount = (int) Math.floor(selectionPressure * popSize); // defualt=4 (0.1 * 40)
+	public static double selectionPressure = 0.02; // 10%
+	public static int kAmount = (int) Math.floor(selectionPressure * popSize); // defualt=20 (0.1 * 200)
 	// public static int tournamentSize = (int) Math.floor(selectionPressure * popSize);
 	
 	// Parameters for mutation 
 	// Rate = probability of changing a gene
 	// Change = the maximum +/- adjustment to the gene value
-	public static double mutateRate = 0.05; // mutation rate for mutation operator
+	public static double mutateRate = 0.01; // mutation rate for mutation operator
 	public static double mutateChange = 0.05; // delta change for mutation operator
+	
+	public static int crossMulti = 4; // by default: 4 alternating swapping segments
+	public static int scrambleCount = 5; // iterations to scramble the tmpList
 	
 	//Random number generator used throughout the application
 	public static long seed = System.currentTimeMillis();
@@ -89,12 +88,12 @@ public class Parameters {
 				
 				str += name + " \t" + val + "\r\n";
 				
-				if (name != "seed" & name != "random" & name != "neuralNetworkClass" & name != "count") {
+				if (name != "seed" & name != "random" & name != "neuralNetworkClass" & name != "count" & name != "fileName") {
 					try {
 			            // Open given file in append mode. 
-			            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
-			            out.write(name.toString());
-			            out.write(", ");
+			            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
+			            String currentOutValue = "\\rot{" + name.toString() + "}" + ", ";
+			            out.write(currentOutValue);
 			            out.close();
 			        } 
 			        catch (IOException e) { 
@@ -106,11 +105,15 @@ public class Parameters {
 			
 			try {
 	            // Open given file in append mode. 
-	            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
-	            out.write("fitness_training");
-	            out.write(", ");
-	            out.write("fitness_testing");
-	            out.write("\n");
+	            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
+//	            out.write("\\rot{" + "train" + "}" + ", ");
+	            out.write("\\rot{" + "avgTrain" + "}" + ", ");
+	            out.write("\\rot{" + "varTrain" + "}" + ", ");
+	            out.write("\\rot{" + "stdTrain" + "}" + ", ");
+//	            out.write("\\rot{" + "test" + "}" + ", ");
+	            out.write("\\rot{" + "avgTest" + "}" + ", ");
+	            out.write("\\rot{" + "varTest" + "}" + ", ");
+	            out.write("\\rot{" + "stdTest" + "}" + "\n");
 	            out.close();
 	        } 
 	        catch (IOException e) { 
@@ -130,10 +133,10 @@ public class Parameters {
 			
 			str += name + " \t" + val + "\r\n";
 			
-			if (name != "seed" & name != "random" & name != "neuralNetworkClass" & name != "count") {
+			if (name != "seed" & name != "random" & name != "neuralNetworkClass" & name != "count" & name != "fileName") {
 				try {
 		            // Open given file in append mode. 
-		            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
+		            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
 		            out.write(val.toString());
 		            out.write(", ");
 		            out.close();

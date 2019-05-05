@@ -1,6 +1,7 @@
 package coursework;
 
 import java.io.BufferedWriter;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.Collections;
 
 import model.Fitness;
 import model.Individual;
@@ -47,23 +50,45 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			 * You must set the best Individual at the end of a run
 			 *
 			 */
+//			System.out.println(Parameters.getNumHidden());
+//			Parameters.setHidden(5);
+//			System.out.println(Parameters.getNumHidden());
+			
 
 			// Select 2 Individuals from the current population. Currently returns random Individual
-//			Individual father = select_tournament();
-//			Individual mother = select_tournament();
-//			Individual father = select_roulette();
-//			Individual mother = select_roulette();
-			Individual father = select_stochastic();
-			Individual mother = select_stochastic();
+//			Individual father = select();
+//			Individual mother = select();
+			
+			Individual father = selectTournament();
+			Individual mother = selectTournament();
+
+//			Individual father = selectRoulette();
+//			Individual mother = selectRoulette();
+
+//			ArrayList<Individual> parents = selectStochastic();
+//			Individual father = parents.get(0);
+//			Individual mother = parents.get(1);
+			
+//			Individual father = selectRandom();
+//			Individual mother = selectRandom();
+			
+			
+			
 
 			// Generate a child by crossover. Not Implemented
-			// ArrayList<Individual> children = reproduce(father, mother);
-
-			// ArrayList<Individual> children = reproduce_cross_one(father, mother);
-			ArrayList<Individual> children = reproduce_cross_uni(father, mother);
+//			ArrayList<Individual> children = reproduce(father, mother);
+//			ArrayList<Individual> children = reproduceCrossOne(father, mother);
+			ArrayList<Individual> children = reproduceCrossUni(father, mother);
+//			ArrayList<Individual> children = reproduceCrossMulti(father, mother);
+			
+			
+			
 
 			//mutate the offspring
-			mutate_swap(children);
+//			mutate(children);
+//			mutateSwap(children);
+			mutateScramble(children);
+//			mutateInverse(children);
 
 			// Evaluate the children
 			evaluateIndividuals(children);
@@ -137,66 +162,27 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		return parent.copy();
 	}
 	
-	private Individual select_tournament() {
+	private Individual selectTournament() {
 		
-		// select k_individuals completely randomly from the population
-		ArrayList<Individual> k_individuals = new ArrayList<>();
-		//System.out.println(population);
-		//System.out.println(population.toArray().length);
-		for (int i = 0; i < Parameters.k_amount; i++) {
-			k_individuals.add(population.get(Parameters.random.nextInt(Parameters.popSize)));
+		// select kIndividuals completely randomly from the population
+		ArrayList<Individual> kIndividuals = new ArrayList<>();
+		for (int i = 0; i < Parameters.kAmount; i++) {
+			kIndividuals.add(population.get(Parameters.random.nextInt(Parameters.popSize)));
 		}
-		//System.out.println(population);
-		//System.out.println(k_individuals.toArray().length);
 		
-		// select the one most fit individual from the k_individuals
-		//System.out.println(k_individuals);
-		Individual best_tournament_member = k_individuals.get(0);
-		for (int i = 0; i < Parameters.k_amount; i++) {
-			if (best_tournament_member.fitness < k_individuals.get(i).fitness) {
-				best_tournament_member = k_individuals.get(i);
+		// select the one most fit individual from the kIndividuals
+		Individual bestTournamentMember = kIndividuals.get(0);
+		for (int i = 0; i < Parameters.kAmount; i++) {
+			if (bestTournamentMember.fitness > kIndividuals.get(i).fitness) {
+				bestTournamentMember = kIndividuals.get(i);
 			}
 		}
-		//System.out.println(best_tournament_member);
 		
 		// repeat until desiered number of individuals are desired
-		return best_tournament_member;
+		return bestTournamentMember;
 	}
 	
-	private Individual select_stochastic() {
-		
-		// sum up all the fitnesses from the population
-		double fitnessSum = 0;
-		for (int i = 0; i < Parameters.popSize; i++) {
-			fitnessSum += population.get(i).fitness;
-		}
-		
-		Individual father = null;
-		Individual mother = null;
-		
-		// make two random points between 0 and the fitness sum
-		double random_one = Math.random() * fitnessSum;
-		double random_two = Math.random() * fitnessSum;
-		
-		// iterate through the population again, until we reach the random_number
-		double partialSum_one = 0;
-		double partialSum_two = 0;
-		for (int i = 0; i < Parameters.popSize; i++) {
-			partialSum_one += population.get(i).fitness;
-			if (partialSum_one >= random_one) {
-				father = population.get(i);
-			}
-			partialSum_two += population.get(i).fitness;
-			if (partialSum_two >= random_two) {
-				mother = population.get(i);
-			}
-		}
-		
-		return null; // return null should never happen
-		
-	}
-	
-	private Individual select_roulette() {
+	private Individual selectRoulette() {
 		
 		// sum up all the fitnesses from the population
 		double fitnessSum = 0;
@@ -205,17 +191,80 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		}
 		
 		// make a random point between 0 and the fitness sum
-		double random_number = Math.random() * fitnessSum;
+		double randomNumber = Math.random() * fitnessSum;
 		
-		// iterate through the population again, until we reach the random_number
+		// iterate through the population again, until we reach the randomNumber
 		double partialSum = 0;
 		for (int i = 0; i < Parameters.popSize; i++) {
 			partialSum += population.get(i).fitness;
-			if (partialSum >= random_number) {
+			if (partialSum >= randomNumber) {
 				return population.get(i); // return the individual at current index
 			}
 		}
 		return null; // return null should never happen
+		
+	}
+	
+	private ArrayList<Individual> selectStochastic() {
+		
+		ArrayList<Individual> parents = new ArrayList<>();
+		Individual father = null;
+		Individual mother = null;
+		
+		// sum up all the fitnesses from the population
+		double fitnessSum = 0;
+		for (int i = 0; i < Parameters.popSize; i++) {
+			fitnessSum += population.get(i).fitness;
+		}
+		
+		// make two random points between 0 and the fitness sum
+		double randomOne = Math.random() * fitnessSum;
+		double randomTwo = Math.random() * fitnessSum;
+		
+		// iterate through the population again, until we reach the randomNumber
+		double partialSumOne = 0;
+		double partialSumTwo = 0;
+		for (int i = 0; i < Parameters.popSize; i++) {
+			partialSumOne += population.get(i).fitness;
+			if (partialSumOne >= randomOne) {
+				father = population.get(i);
+				if (i == 0) {
+					mother = population.get(i+1);
+					break;
+				} else {
+					mother = population.get(i-1);
+					break;
+				}
+			}
+			partialSumTwo += population.get(i).fitness;
+			if (partialSumTwo >= randomTwo) {
+				father = population.get(i);
+				if (i == 0) {
+					mother = population.get(i+1);
+					break;
+				} else {
+					mother = population.get(i-1);
+					break;
+				}
+			}
+		}
+		
+		//append the parents to the list
+		parents.add(father);
+		parents.add(mother);
+		
+		//return list of both parents
+		return parents;
+		
+	}
+	
+	private Individual selectRandom() {
+		
+		//make a random int between 0 and the population-size-1
+		int randomIndividual = Parameters.random.nextInt(population.size());
+		
+		//return the individual in that position
+		return population.get(randomIndividual);
 		
 	}
 
@@ -232,59 +281,100 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		return children;
 	}
 
-	public ArrayList<Individual> reproduce_cross_one(Individual father, Individual mother) {
-		Individual child_one = new Individual();
-		Individual child_two = new Individual();
+	public ArrayList<Individual> reproduceCrossOne(Individual father, Individual mother) {
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
 		double crossPoint = Math.random() * father.chromosome.length; // make a crossover point
 
 		for (int i = 0; i < father.chromosome.length; ++i) {
 			if (i < crossPoint) {
-				child_one.chromosome[i] = father.chromosome[i];
-				child_two.chromosome[i] = mother.chromosome[i];
+				childOne.chromosome[i] = father.chromosome[i];
+				childTwo.chromosome[i] = mother.chromosome[i];
 			}
 			else {
-				child_one.chromosome[i] = mother.chromosome[i];
-				child_two.chromosome[i] = father.chromosome[i];
+				childOne.chromosome[i] = mother.chromosome[i];
+				childTwo.chromosome[i] = father.chromosome[i];
 			}
 		}
 		ArrayList<Individual> children = new ArrayList<>();
-		children.add(child_one);
-		children.add(child_two);
+		children.add(childOne);
+		children.add(childTwo);
 		return children;
 	}
 	
-	public ArrayList<Individual> reproduce_cross_uni(Individual father, Individual mother) {
+	public ArrayList<Individual> reproduceCrossUni(Individual father, Individual mother) {
 		// uniform crossover: combining multiple (default two) candidate solutions to get new solutions (default two)
 		// returns two sets of genes (chromosomes), both inherited from its parents
 		
-		Individual child_one = new Individual();
-		Individual child_two = new Individual();
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
 
 		for (int i = 0; i < father.chromosome.length; ++i) {
 			if (Parameters.random.nextBoolean()) { // chance is 50-50 from either parent
-				child_one.chromosome[i] = father.chromosome[i];
-				child_two.chromosome[i] = mother.chromosome[i];
+				childOne.chromosome[i] = father.chromosome[i];
+				childTwo.chromosome[i] = mother.chromosome[i];
 			}
 			else {
-				child_one.chromosome[i] = mother.chromosome[i];
-				child_two.chromosome[i] = father.chromosome[i];
+				childOne.chromosome[i] = mother.chromosome[i];
+				childTwo.chromosome[i] = father.chromosome[i];
 			}
 		}
 		ArrayList<Individual> children = new ArrayList<>();
-		children.add(child_one);
-		children.add(child_two);
+		children.add(childOne);
+		children.add(childTwo);
+		return children;
+	}
+	
+	public ArrayList<Individual> reproduceCrossMulti(Individual father, Individual mother) {
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+		int crossMulti = Parameters.crossMulti;
+		
+		// make crossMulti-1 random points, and append them to list
+		ArrayList<Integer> crossPoints = new ArrayList<>();
+		for (int i = 0; i < crossMulti-1; i++) {
+			// append random numbers to list (from 0 to length of chromosome)
+			crossPoints.add(Parameters.random.nextInt(father.chromosome.length-1));
+		}
+
+		// sort list
+		Collections.sort(crossPoints);
+		
+		// append an infinitly high number to crossPoints
+		crossPoints.add(father.chromosome.length+1); // one over length of chromosome
+		
+		int idx = 0;
+		for (int i = 0; i < father.chromosome.length; i++) {
+			if (i >= crossPoints.get(idx)) {
+				if (i >= crossPoints.get(idx+1)) {
+					idx += 2;
+					childOne.chromosome[i] = father.chromosome[i];
+					childTwo.chromosome[i] = mother.chromosome[i];
+					continue;
+				}
+				childOne.chromosome[i] = mother.chromosome[i];
+				childTwo.chromosome[i] = father.chromosome[i];
+			} else {
+				childOne.chromosome[i] = father.chromosome[i];
+				childTwo.chromosome[i] = mother.chromosome[i];
+			}
+		}
+		
+		ArrayList<Individual> children = new ArrayList<>();
+		children.add(childOne);
+		children.add(childTwo);
 		return children;
 	}
 
 	/**
-	 * Mutation
-	 *
+	 * Mutation: original: based on the mutation-rate
+	 * Either +3 or -3 (orig. parameter)
 	 *
 	 */
 	private void mutate(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
 			for (int i = 0; i < individual.chromosome.length; i++) {
-				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+				if (Parameters.random.nextDouble() < Parameters.mutateRate) { // orig: 99% chance
 					if (Parameters.random.nextBoolean()) {
 						individual.chromosome[i] += (Parameters.mutateChange);
 					} else {
@@ -295,20 +385,74 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		}
 	}
 	
-	private void mutate_swap(ArrayList<Individual> individuals) {
+	private void mutateSwap(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
 			// select two genes to be swapped
 			
-			int random_one = Parameters.random.nextInt(individual.chromosome.length-1);
-			int random_two = Parameters.random.nextInt(individual.chromosome.length-1);
+			int randomOne = Parameters.random.nextInt(individual.chromosome.length-1);
+			int randomTwo = Parameters.random.nextInt(individual.chromosome.length-1);
 			
-			double temp_one;
-			double temp_two;
-			temp_one = individual.chromosome[random_one];
-			temp_two = individual.chromosome[random_two];
+			double tempOne = individual.chromosome[randomOne];
+			double tempTwo = individual.chromosome[randomTwo];
 			
-			individual.chromosome[random_one] = temp_two;
-			individual.chromosome[random_two] = temp_one;
+			individual.chromosome[randomOne] = tempTwo;
+			individual.chromosome[randomTwo] = tempOne;
+		}
+	}
+	
+	private void mutateScramble(ArrayList<Individual> individuals) {
+		for(Individual individual : individuals) {
+			// make two random numbers equal to or under the length of the chromosome
+			int randomLower = ThreadLocalRandom.current().nextInt(0, (individual.chromosome.length-1) + 1); // 0-max
+			int randomHigher = ThreadLocalRandom.current().nextInt(randomLower, (individual.chromosome.length-1) + 1); // rnd-max
+			int rangeLength = (randomHigher - randomLower) + 1; // both inclusive
+			
+			// initiate a tmpList of the length rangeLength
+			double[] tmpList = new double[rangeLength];
+			
+			// populate tempList
+			for (int i = 0; i < rangeLength; i++) {
+				tmpList[i] = individual.chromosome[i + randomLower]; // add the chromosome from the corresponding index
+			}
+			
+			// swap two random values scrambleCount times (just like in mutateSwap)
+			for (int i = 0; i < Parameters.scrambleCount; i++) {
+				int randomOne = Parameters.random.nextInt(rangeLength);
+				int randomTwo = Parameters.random.nextInt(rangeLength);
+				
+				double tempOne = tmpList[randomOne];
+				double tempTwo = tmpList[randomTwo];
+				
+				tmpList[randomOne] = tempTwo;
+				tmpList[randomTwo] = tempOne;
+			}
+			
+			// overwrite the initial values with the scrambled values
+			for (int i = 0; i < rangeLength; i++) {
+				individual.chromosome[i + randomLower] = tmpList[i];
+			}
+		}
+	}
+	
+	private void mutateInverse(ArrayList<Individual> individuals) {
+		for(Individual individual : individuals) {
+			// make two random numbers equal to or under the length of the chromosome
+			int randomLower = ThreadLocalRandom.current().nextInt(0, (individual.chromosome.length-1) + 1); // 0-max
+			int randomHigher = ThreadLocalRandom.current().nextInt(randomLower, (individual.chromosome.length-1) + 1); // rnd-max
+			int rangeLength = (randomHigher - randomLower) + 1; // both inclusive
+			
+			// initiate a tmpList of the length rangeLength
+			double[] tmpList = new double[rangeLength];
+			
+			// populate tempList
+			for (int i = 0; i < rangeLength; i++) {
+				tmpList[i] = individual.chromosome[i + randomLower]; // add the chromosome from the corresponding index
+			}
+			
+			// overwrite the initial values with the scrambled values
+			for (int i = 0; i < rangeLength; i++) {
+				individual.chromosome[randomHigher - i] = tmpList[i];
+			}
 		}
 	}
 
@@ -354,6 +498,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		} else if (x > 20.0) {
 			return 1.0;
 		}
-		return Math.tanh(x);
+//		return Math.tanh(x);
+		return Math.max(0, x); // ReLU: Rectified Linear Unit
 	}
 }

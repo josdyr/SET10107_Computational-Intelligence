@@ -3,10 +3,12 @@ package coursework;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import model.Fitness;
 import model.LunarParameters.DataSet;
 import model.NeuralNetwork;
+import coursework.Statistics;
 
 /**
  * Example of how to to run the {@link ExampleEvolutionaryAlgorithm} without the need for the GUI
@@ -22,14 +24,19 @@ public class StartNoGui {
 		 * 
 		 */
 		
-		for (int i = 0; i < 10; i++) {
+		final int EPISODES = 10;
+		
+		double[] train = new double[EPISODES];
+		double[] test = new double[EPISODES];
+		
+		for (int i = 0; i < EPISODES; i++) {
 			
 			/*
 			 * Set the parameters here or directly in the Parameters Class.
 			 * Note you should use a maximum of 20,0000 evaluations for your experiments 
 			 */
-			Parameters.maxEvaluations = 20000; // Used to terminate the EA after this many generations
-			Parameters.popSize = 200; // Population Size
+//			Parameters.maxEvaluations = 20000; // Used to terminate the EA after this many generations
+//			Parameters.popSize = 200; // Population Size
 
 			//number of hidden nodes in the neural network
 			Parameters.setHidden(5);
@@ -46,36 +53,67 @@ public class StartNoGui {
 			/* Print out the best weights found
 			 * (these will have been saved to disk in the project default directory) 
 			 */
-			System.out.println(nn.best);
+			System.out.println("\n---");
+			
+			System.out.println("Fitness on " + Parameters.getDataSet() + " " + nn.best.fitness);
+			train[i] = nn.best.fitness;
+			
+			double meanTrain = 0;
+			double varianceTrain = 0;
+			double stdTrain = 0;
+			if (i == EPISODES-1) {
+				Statistics stat = new Statistics(train);
+				meanTrain = stat.getMean();
+				varianceTrain = stat.getVariance();
+				stdTrain = stat.getStdDev();
+				System.out.println("meanTrain: " + meanTrain + " varianceTrain: " + varianceTrain + " stdTrain: " + stdTrain);
+			}
 			
 			try {
 	            // Open given file in append mode. 
-	            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
-	            out.write(String.valueOf(nn.best).toString());
-	            out.write(", ");
+	            BufferedWriter out = new BufferedWriter(new FileWriter(Parameters.fileName, true));
+	            out.write(String.valueOf(Math.floor(nn.best.fitness * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf(Math.floor(meanTrain * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf(Math.floor(varianceTrain * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf(Math.floor(stdTrain * 10000) / 10000).toString() + ", ");
 	            out.close();
-	        } 
-	        catch (IOException e) { 
-	            System.out.println("exception occoured" + e); 
+	        }
+	        catch (IOException e) {
+	            System.out.println("exception occoured" + e);
 	        }
 			
-			/**
+			/**k
 			 * We now need to test the trained network on the unseen test Set
 			 */
 			Parameters.setDataSet(DataSet.Test);
-			double fitness = Fitness.evaluate(nn);
-			System.out.println("Fitness on " + Parameters.getDataSet() + " " + fitness);
+			test[i] = Fitness.evaluate(nn);
+			System.out.println("Fitness on " + Parameters.getDataSet() + " " + test[i]);
+			
+			double meanTest = 0;
+			double varianceTest = 0;
+			double stdTest = 0;
+			if (i == EPISODES-1) {
+				Statistics stat = new Statistics(test);
+				meanTest = stat.getMean();
+				varianceTest = stat.getVariance();
+				stdTest = stat.getStdDev();
+				System.out.println("meanTest: " + meanTest + " varianceTest: " + varianceTest + " stdTest: " + stdTest);
+			}
 			
 			try {
 	            // Open given file in append mode. 
-	            BufferedWriter out = new BufferedWriter(new FileWriter("out.csv", true));
-	            out.write(String.valueOf(fitness).toString());
-	            out.write("\n");
+	            BufferedWriter out = new BufferedWriter(new FileWriter(Parameters.fileName, true));
+	            out.write(String.valueOf(Math.floor(test[i] * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf(Math.floor(meanTest * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf(Math.floor(varianceTest * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf(Math.floor(stdTest * 10000) / 10000).toString() + ", ");
+	            out.write(String.valueOf("\n").toString());
 	            out.close();
 	        } 
 	        catch (IOException e) { 
 	            System.out.println("exception occoured" + e); 
 	        }
+			System.out.println("---\n");
 		}
 		
 		
